@@ -46,7 +46,7 @@ The application will open in your browser at `http://localhost:7860`
 
 ### Basic Usage
 1. **Upload Image**: Drag and drop or click to upload your image
-2. **Select Protection Method**: Choose from Cloaking, Style Defense, or both
+2. **Select Protection Method**: Choose from Cloaking, Style Defense
 3. **Configure Options**: Adjust protection intensity and other parameters
 4. **Apply Protection**: Click "Protect Image" to apply selected protections
 5. **Download**: Save the protected image to your device
