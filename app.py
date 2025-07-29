@@ -173,10 +173,16 @@ def protect_images_batch(
                 zip_file.writestr(f"protected_image_{i+1}.png", img_buffer.read())
 
     zip_buffer.seek(0)
+    zip_content = zip_buffer.getvalue()
+
     # Save to a temporary file and return the path
     with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
-        tmp_file.write(zip_buffer.getvalue())
+        tmp_file.write(zip_content)
         tmp_path = tmp_file.name
+
+    # Ensure the file is properly closed before returning
+    zip_buffer.close()
+
     return tmp_path, "✅ Batch processing complete. Download the zip file."
 
 
@@ -184,12 +190,16 @@ def create_interface():
     """Create and configure the Gradio interface."""
     
     with gr.Blocks(title="SafeShot - Image Protection Tool") as app:
-        gr.Markdown(
+        gr.HTML(
             """
-            # 🛡️ SafeShot - Image Protection Tool
-            
-            Protect your images from unauthorized AI training and misuse with multiple defense mechanisms.
-            """
+    <div style="display: flex; align-items: center;">
+        <img src="/gradio_api/file=assets/logo.png" width="50" style="margin-right: 10px;"/>
+        <h1 style="margin: 0;">SafeShot - Image Protection Tool</h1>
+    </div>
+
+    <p>Protect your images from unauthorized AI training and misuse with multiple defense mechanisms.</p>
+    """
+
         )
         
         with gr.Tabs():
@@ -544,6 +554,12 @@ def create_interface():
                     ],
                     outputs=[batch_output_file, batch_status_text]
                 )
+
+        gr.Markdown(
+            """
+            <p align="center">Made with ❤️ by <a href="https://github.com/Swagata-Roy/SafeShot" target="_blank" style="text-decoration: none; color: #555;"><strong>Swagata Roy</strong></a></p>
+            """
+        )
         
     return app
 
@@ -554,5 +570,6 @@ if __name__ == "__main__":
         share=False,
         server_name="127.0.0.1",
         server_port=7861,  # Use a different port
-        show_error=True
+        show_error=True,
+        allowed_paths=["assets"]
     )

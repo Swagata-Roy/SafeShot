@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFont, ExifTags
 import io
 from typing import Optional, Tuple, Dict, Any
 import datetime
-import piexif  # type: ignore
+import piexif
 
 
 def strip_metadata(image: Image.Image) -> Image.Image:
@@ -25,7 +25,7 @@ def strip_metadata(image: Image.Image) -> Image.Image:
     """
     try:
         # Load EXIF data
-        exif_bytes = piexif.dump({})  # type: ignore
+        exif_bytes = piexif.dump({})
         
         # Save image without EXIF data
         img_byte_arr = io.BytesIO()
@@ -40,23 +40,23 @@ def strip_metadata(image: Image.Image) -> Image.Image:
             else:
                 # Keep RGBA for formats that support it
                 pass
-        img_to_save.save(img_byte_arr, format=format_to_use, exif=exif_bytes)  # type: ignore
+        img_to_save.save(img_byte_arr, format=format_to_use, exif=exif_bytes)
         img_byte_arr.seek(0)
         return Image.open(img_byte_arr)
     except Exception as e:
         # Fallback to original method if piexif fails
         print(f"Piexif stripping failed: {e}. Falling back to basic stripping.")
-        data = list(image.getdata())  # type: ignore
+        data = list(image.getdata())
         image_without_exif = Image.new(image.mode, image.size)
-        image_without_exif.putdata(data)  # type: ignore
+        image_without_exif.putdata(data)
         
         if hasattr(image, 'info'):
             safe_info = {}
             for key, value in image.info.items():
-                if isinstance(key, str) and key.lower() in ['dpi', 'transparency']:  # type: ignore
+                if isinstance(key, str) and key.lower() in ['dpi', 'transparency']:
                     safe_info[key] = value
-            for key, value in safe_info.items():  # type: ignore
-                image_without_exif.info[key] = value  # type: ignore
+            for key, value in safe_info.items():
+                image_without_exif.info[key] = value
         return image_without_exif
 
 
@@ -70,7 +70,7 @@ def get_metadata_info(image: Image.Image) -> Dict[str, Any]:
     Returns:
         Dictionary containing metadata information
     """
-    metadata: Dict[str, Any] = {  # type: ignore
+    metadata: Dict[str, Any] = {
         'exif': {},
         'info': {},
         'format': image.format,

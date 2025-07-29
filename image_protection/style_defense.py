@@ -6,9 +6,9 @@ disrupt AI's ability to extract and transfer artistic styles.
 """
 
 import numpy as np
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image
 import cv2
-from typing import Tuple, Optional
+from typing import Tuple
 import random
 
 
