@@ -193,7 +193,7 @@ pip install opencv-python
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions welcome!
 
 ### Ways to Contribute
 - Report bugs and issues
@@ -204,7 +204,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache-2.0 license - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -218,8 +218,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Issues**: [GitHub Issues](https://github.com/your-repo/SafeShot/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/your-repo/SafeShot/discussions)
-- **Email**: safeshot@example.com
-
 ---
 
 **⚠️ Disclaimer**: While SafeShot provides strong protection against many AI systems, no protection method is 100% effective. Use multiple protection methods for best results.
