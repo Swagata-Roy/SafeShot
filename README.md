@@ -79,19 +79,30 @@ The application will open in your browser at `http://localhost:7860`
 - **Piexif**: Enables robust handling and stripping of EXIF metadata for enhanced privacy.
 
 ### Architecture
-```
 SafeShot/
-├── app.py                    # Main Gradio interface
-├── image_protection/         # Core protection modules
-│   ├── cloak.py              # AI cloaking algorithms
-│   ├── style_defense.py      # Texture warping & blending
-│   ├── cropper.py            # Smart cropping with edge softening
-│   ├── metadata.py           # EXIF scrubbing & watermarking
-│   └── utils.py              # Image utilities
-├── assets/                   # Example images and resources
-├── requirements.txt          # Dependencies
-└── README.md                 # This file
-```
+├── app.py                      # Main Gradio interface
+├── image_protection/           # Core protection modules
+│   ├── __init__.py             # Initializes module
+│   ├── cloak.py                # AI cloaking algorithms
+│   ├── cropper.py              # Smart cropping with edge softening
+│   ├── metadata.py             # EXIF scrubbing & watermarking
+│   ├── style_defense.py        # Texture warping & blending
+│   ├── utils.py                # Shared image utilities
+│   └── version.py              # Version metadata
+├── assets/                     # Logo & example images
+│   ├── logo.png                # SafeShot branding icon
+│   ├── example1.png            # Image samples
+│   ├── example2.png
+│   └── example3.png
+├── tests/                      # Unit and feature tests
+│   ├── __init__.py
+│   └── test_basic.py           # Functional coverage
+├── check_requirements.py       # Dependency sanity checker
+├── .env                        # Environment variables
+├── .gitattributes              # Git metadata control
+├── LICENSE                     # Apache-2.0 license
+├── requirements.txt            # Dependency manifest
+└── README.md                   # Project documentation
 
 ### Protection Algorithms
 
