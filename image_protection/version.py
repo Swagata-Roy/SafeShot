@@ -5,11 +5,10 @@ Version information and module metadata.
 from typing import List, Dict, Union
 
 __version__ = "1.0.0"
-__author__ = "SafeShot Team"
-__email__ = "safeshot@example.com"
+__author__ = "Swagata Roy"
 __description__ = "Comprehensive image protection against AI training and misuse"
-__license__ = "MIT"
-__url__ = "https://github.com/your-repo/SafeShot"
+__license__ = "Apache-2.0"
+__url__ = "https://github.com/Swagata-Roy/SafeShot"
 
 # Version info tuple for easy comparison
 VERSION_INFO = (1, 0, 0)

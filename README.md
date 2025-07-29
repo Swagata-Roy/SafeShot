@@ -12,7 +12,6 @@ SafeShot is a comprehensive image protection tool designed to safeguard your pho
 
 ### Key Capabilities
 - **Multiple Protection Layers**: Combine different methods for enhanced security
-- **Real-time Preview**: See protection effects before applying
 - **Batch Processing**: Protect multiple images at once
 - **Quality Preservation**: Maintain image quality while applying protections
 - **Easy-to-use Interface**: Simple Gradio web interface
