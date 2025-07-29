@@ -37,14 +37,6 @@ cd SafeShot
 # Install dependencies
 pip install -r requirements.txt
 
-# Add your example images (optional)
-mkdir -p assets
-# Copy your images to the assets directory:
-# - assets/example_portrait.jpg
-# - assets/example_landscape.jpg
-# - assets/example_artwork.jpg
-# You can use any image format (JPG, PNG) and filename
-
 # Run the application
 python app.py
 ```
