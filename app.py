@@ -555,6 +555,110 @@ def create_interface():
                     outputs=[batch_output_file, batch_status_text]
                 )
 
+            with gr.TabItem("Guide"):
+                gr.HTML(
+                    """
+                    <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
+                        <h1 style="text-align: center; color: #2c3e50;">📖 SafeShot User Guide</h1>
+                        
+                        <h2 style="color: #3498db;">🎯 What is SafeShot?</h2>
+                        <p>SafeShot is a comprehensive image protection tool designed to safeguard your photos from unauthorized AI training and misuse. It offers multiple defense mechanisms to protect your visual content while maintaining image quality.</p>
+                        
+                        <h2 style="color: #3498db;">🔧 Protection Methods</h2>
+                        
+                        <h3 style="color: #e74c3c;">1. AI Cloaking (Anti-AI)</h3>
+                        <p><strong>What it does:</strong> Applies subtle pixel-level perturbations that are invisible to humans but confuse AI models, preventing them from learning from your images.</p>
+                        <ul>
+                            <li><strong>Fawkes-style:</strong> Advanced cloaking technique that creates "poisoned" images for facial recognition systems</li>
+                            <li><strong>LowKey-style:</strong> More aggressive cloaking that works against broader AI training datasets</li>
+                        </ul>
+                        <p><strong>Best for:</strong> Photos with faces, personal images, professional headshots</p>
+                        
+                        <h3 style="color: #e74c3c;">2. Style Defense</h3>
+                        <p><strong>What it does:</strong> Applies artistic transformations that maintain visual appeal while disrupting AI feature extraction.</p>
+                        <ul>
+                            <li><strong>Noise:</strong> Adds controlled noise patterns</li>
+                            <li><strong>Blur:</strong> Applies selective blurring to key areas</li>
+                            <li><strong>Pixelate:</strong> Creates pixelation effects</li>
+                            <li><strong>Swirl:</strong> Applies swirling distortions</li>
+                        </ul>
+                        <p><strong>Best for:</strong> Artistic content, social media posts, creative portfolios</p>
+                        
+                        <h2 style="color: #3498db;">✂️ Smart Cropping</h2>
+                        <p><strong>What it does:</strong> Intelligently crops images to remove sensitive areas while preserving important content.</p>
+                        <ul>
+                            <li><strong>Aspect Ratios:</strong> 1:1, 4:3, 16:9, 9:16, or keep original</li>
+                            <li><strong>Focus Modes:</strong>
+                                <ul>
+                                    <li><strong>Center:</strong> Crops from the center</li>
+                                    <li><strong>Face:</strong> Prioritizes face detection</li>
+                                    <li><strong>Saliency:</strong> Uses AI to identify important regions</li>
+                                </ul>
+                            </li>
+                            <li><strong>Edge Softness:</strong> Smooths crop edges for natural blending</li>
+                        </ul>
+                        
+                        <h2 style="color: #3498db;">🛡️ Metadata Protection</h2>
+                        <ul>
+                            <li><strong>Strip EXIF:</strong> Removes location, device, and timestamp data</li>
+                            <li><strong>Text Watermark:</strong> Adds custom text overlays</li>
+                            <li><strong>Image Watermark:</strong> Embeds logo or signature images</li>
+                            <li><strong>Opacity Control:</strong> Adjust watermark transparency</li>
+                        </ul>
+                        
+                        <h2 style="color: #3498db;">📋 How to Use</h2>
+                        
+                        <h3 style="color: #27ae60;">Single Image Processing</h3>
+                        <ol>
+                            <li>Go to the <strong>"Single Image"</strong> tab</li>
+                            <li>Upload your image using the upload button</li>
+                            <li>Select your preferred protection method:
+                                <ul>
+                                    <li>Choose <strong>"Cloaking (Anti-AI)"</strong> for AI protection</li>
+                                    <li>Choose <strong>"Style Defense"</strong> for artistic protection</li>
+                                    <li>Choose <strong>"None (Metadata Only)"</strong> for just metadata/watermark changes</li>
+                                </ul>
+                            </li>
+                            <li>Adjust method-specific settings (intensity, texture type, etc.)</li>
+                            <li>Configure optional features:
+                                <ul>
+                                    <li>Enable <strong>Smart Cropping</strong> to resize/crop</li>
+                                    <li>Enable <strong>Strip EXIF</strong> to remove metadata</li>
+                                    <li>Add <strong>watermarks</strong> for branding/copyright</li>
+                                </ul>
+                            </li>
+                            <li>Click <strong>"🛡️ Protect Image"</strong></li>
+                            <li>Download your protected image</li>
+                        </ol>
+                        
+                        <h3 style="color: #27ae60;">Batch Processing</h3>
+                        <ol>
+                            <li>Go to the <strong>"Batch Processing"</strong> tab</li>
+                            <li>Upload multiple images (drag & drop or click to select)</li>
+                            <li>Configure protection settings (same as single image)</li>
+                            <li>Click <strong>"🛡️ Protect All Images"</strong></li>
+                            <li>Download the ZIP file containing all protected images</li>
+                        </ol>
+                        
+                        <h2 style="color: #3498db;">💡 Pro Tips</h2>
+                        <ul>
+                            <li><strong>Test different methods:</strong> Try various protection levels to find the best balance</li>
+                            <li><strong>Batch similar images:</strong> Group similar images for consistent batch processing</li>
+                            <li><strong>Keep originals:</strong> Always save unprotected copies as backup</li>
+                            <li><strong>Check results:</strong> Preview protected images before sharing</li>
+                        </ul>
+                        
+                        <h2 style="color: #3498db;">🚨 Important Notes</h2>
+                        <ul>
+                            <li>Protected images may look slightly different - this is normal and intentional</li>
+                            <li>AI cloaking effectiveness varies by image type and AI model</li>
+                            <li>Style defense creates visible changes - choose based on your needs</li>
+                            <li>Metadata stripping is permanent - save originals first</li>
+                        </ul>
+                    </div>
+                    """
+                )
+        
         gr.Markdown(
             """
             <p align="center">Made with ❤️ by <a href="https://github.com/Swagata-Roy/SafeShot" target="_blank" style="text-decoration: none; color: #555;"><strong>Swagata Roy</strong></a></p>
