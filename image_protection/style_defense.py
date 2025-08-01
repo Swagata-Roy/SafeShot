@@ -47,7 +47,20 @@ def apply_style_defense(
     protected = _apply_style_mixing(protected, strength)
     
     # Convert back to PIL Image
-    return Image.fromarray(protected.astype(np.uint8))
+    if protected.shape[2] == 4:
+        # For RGBA images, ensure we maintain the alpha channel
+        return Image.fromarray(protected.astype(np.uint8))
+    elif protected.shape[2] == 3:
+        # For RGB images
+        return Image.fromarray(protected.astype(np.uint8))
+    else:
+        # For other multi-channel images, convert to RGB
+        if len(protected.shape) == 3 and protected.shape[2] > 3:
+            # Keep only first 3 channels (RGB)
+            rgb_protected = protected[..., :3]
+            return Image.fromarray(rgb_protected.astype(np.uint8))
+        else:
+            return Image.fromarray(protected.astype(np.uint8))
 
 
 def _apply_noise_texture(
@@ -60,7 +73,15 @@ def _apply_noise_texture(
     
     # Generate multi-scale noise
     noise_scales = [1, 2, 4, 8]
-    combined_noise = np.zeros_like(img_array, dtype=np.float32)
+    # Handle RGBA images by working with RGB channels only
+    if img_array.shape[-1] == 4:
+        img_rgb = img_array[..., :3].copy()
+        alpha = img_array[..., 3:4].copy()
+        combined_noise = np.zeros_like(img_rgb, dtype=np.float32)
+    else:
+        img_rgb = img_array.copy()
+        alpha = None
+        combined_noise = np.zeros_like(img_array, dtype=np.float32)
     
     for scale in noise_scales:
         # Generate noise at different scales
@@ -91,8 +112,15 @@ def _apply_noise_texture(
     if len(img_array.shape) == 3:
         edge_mask = np.stack([edge_mask] * 3, axis=-1)
     
-    result += final_noise * strength * 30 * edge_mask
+    # Apply noise to RGB channels only
+    if alpha is not None:
+        result[..., :3] += final_noise * strength * 30 * edge_mask[..., :3]
+    else:
+        result += final_noise * strength * 30 * edge_mask
     
+    # Apply the result to the appropriate channels
+    if alpha is not None:
+        result = np.concatenate([result, alpha], axis=-1)
     return np.clip(result, 0, 255)
 
 
@@ -257,14 +285,33 @@ def _apply_style_mixing(
             result[:, :, i] *= channel_weights[i]
     
     # Local contrast manipulation
-    result = _manipulate_local_contrast(result, strength)
+    # Handle RGBA images for style mixing
+    if result.shape[-1] == 4:
+        result_rgb = result[..., :3].copy()
+        result_alpha = result[..., 3:4].copy()
+        result_rgb = _manipulate_local_contrast(result_rgb, strength)
+        result = np.concatenate([result_rgb, result_alpha], axis=-1)
+    else:
+        result = _manipulate_local_contrast(result, strength)
     
     # Texture synthesis disruption
     texture_noise = _generate_texture_noise(result.shape[:2])
     if len(img_array.shape) == 3:
-        texture_noise = np.stack([texture_noise] * 3, axis=-1)
-    
-    result += texture_noise * strength * 20
+        if img_array.shape[2] == 3:
+            texture_noise = np.stack([texture_noise] * 3, axis=-1)
+        elif img_array.shape[2] == 4:
+            # For RGBA, apply texture noise to RGB channels only
+            texture_noise_rgb = np.stack([texture_noise] * 3, axis=-1)
+            if result.shape[2] == 4:
+                result[..., :3] += texture_noise_rgb * strength * 20
+            else:
+                result += texture_noise_rgb * strength * 20
+        else:
+            # For other multi-channel images, apply to all channels
+            texture_noise = np.stack([texture_noise] * img_array.shape[2], axis=-1)
+            result += texture_noise * strength * 20
+    else:
+        result += texture_noise * strength * 20
     
     return np.clip(result, 0, 255).astype(np.uint8)
 
@@ -395,27 +442,58 @@ def _manipulate_local_contrast(
     result = img_array.copy()
     
     # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
-    if len(img_array.shape) == 3:
+    if len(img_array.shape) == 3 and img_array.shape[2] == 3:
         # Convert to LAB color space
         lab = cv2.cvtColor(img_array.astype(np.uint8), cv2.COLOR_RGB2LAB)
         l, a, b = cv2.split(lab)
-        
+
         # Apply CLAHE to L channel
         clahe = cv2.createCLAHE(
             clipLimit=2.0 + strength * 3,
             tileGridSize=(8, 8)
         )
         l = clahe.apply(l)
-        
+
         # Merge and convert back
         lab = cv2.merge([l, a, b])
         result = cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
-    else:
+    elif len(img_array.shape) == 3 and img_array.shape[2] == 4:
+        # For RGBA, apply CLAHE to RGB channels only
+        rgb_part = img_array[..., :3]
+        lab = cv2.cvtColor(rgb_part.astype(np.uint8), cv2.COLOR_RGB2LAB)
+        l, a, b = cv2.split(lab)
+
+        # Apply CLAHE to L channel
         clahe = cv2.createCLAHE(
             clipLimit=2.0 + strength * 3,
             tileGridSize=(8, 8)
         )
-        result = clahe.apply(img_array.astype(np.uint8))
+        l = clahe.apply(l)
+
+        # Merge and convert back
+        lab = cv2.merge([l, a, b])
+        rgb_result = cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
+        result = np.concatenate([rgb_result, img_array[..., 3:4]], axis=-1)
+    else:
+        # For grayscale or single channel, apply CLAHE directly
+        if len(img_array.shape) == 2:
+            # Single channel image
+            clahe = cv2.createCLAHE(
+                clipLimit=2.0 + strength * 3,
+                tileGridSize=(8, 8)
+            )
+            result = clahe.apply(img_array.astype(np.uint8))
+        else:
+            # Multi-channel image (not RGB or RGBA), apply CLAHE to each channel
+            channels = []
+            clahe = cv2.createCLAHE(
+                clipLimit=2.0 + strength * 3,
+                tileGridSize=(8, 8)
+            )
+            for i in range(img_array.shape[2]):
+                channel = clahe.apply(img_array[..., i].astype(np.uint8))
+                channels.append(channel)
+            result = np.stack(channels, axis=-1)
     
     # Blend with original
     result = img_array * (1 - strength * 0.5) + result * (strength * 0.5)
