@@ -5,19 +5,19 @@ This module implements proactive defenses against deepfake generation and
 face swapping by disrupting facial feature extractors.
 """
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageDraw
 import numpy as np
 import torch
 import torchvision.transforms as T
 import torchattacks
-from torchvision.models import resnet50
+from torchvision.models import resnet50, ResNet50_Weights
 from typing import Any
 import cv2
 from image_protection.utils import detect_faces
 
 # Load a pre-trained model for feature extraction (e.g., ResNet-50)
 # In a real scenario, a face recognition model like ArcFace would be used.
-model = resnet50(pretrained=True)
+model = resnet50(weights=ResNet50_Weights.DEFAULT)
 model.eval()
 
 # Define image transformations
@@ -38,28 +38,24 @@ def apply_faceshield(
     This is a simplified simulation. A real implementation would be more complex.
     """
     image = image.convert("RGB") # Ensure image is in RGB format
+    faces = detect_faces(image)
     
     if method == "attention_manipulation":
         # Simulate attention manipulation by adding noise to salient regions.
-        # This is a simplified proxy for the actual technique.
         img_array = np.array(image).astype(np.float32)
-        faces = detect_faces(image)
-        
-        # A real implementation would use a saliency model. Here, we'll just add noise to the center.
         h, w, _ = img_array.shape
         
         if faces:
+            noise_mask = np.zeros((h, w, 1), dtype=np.float32)
             for (x, y, w_face, h_face) in faces:
                 center_x, center_y = x + w_face // 2, y + h_face // 2
                 radius = int(min(w_face, h_face) * 0.7 * intensity)
-                
-                mask = np.zeros((h, w, 1), dtype=np.float32)
-                cv2.circle(mask, (center_x, center_y), radius, (1,), -1)
-                
-                noise = np.random.randn(h, w, 3) * intensity * 255 * mask
-                img_array = np.clip(img_array + noise, 0, 255)
-        
-        protected_array = img_array.astype(np.uint8)
+                cv2.circle(noise_mask, (center_x, center_y), radius, (1,), -1)
+            
+            noise = np.random.randn(h, w, 3) * intensity * 255 * noise_mask
+            protected_array = np.clip(img_array + noise, 0, 255).astype(np.uint8)
+        else:
+            protected_array = img_array.astype(np.uint8)
         
     elif method == "embedding_disruption":
         # Use PGD attack to perturb the image embeddings
@@ -72,7 +68,26 @@ def apply_faceshield(
     # Apply Gaussian blur for imperceptibility
     if blur_radius > 0:
         protected_image = Image.fromarray(protected_array)
-        return protected_image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+        if method == "attention_manipulation" and faces:
+            # Blur only the face regions
+            blurred_image = protected_image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+            
+            # Create a mask for compositing
+            blur_mask_img = Image.new("L", image.size, 0)
+            mask_draw = ImageDraw.Draw(blur_mask_img)
+
+            for (x, y, w_face, h_face) in faces:
+                # Draw filled rectangles for the face areas
+                mask_draw.rectangle([x, y, x + w_face, y + h_face], fill=255)
+            
+            # Feather the mask to create a smooth transition
+            blur_mask_img = blur_mask_img.filter(ImageFilter.GaussianBlur(radius=max(1, blur_radius * 2)))
+
+            # Composite the blurred faces onto the protected image
+            return Image.composite(blurred_image, protected_image, blur_mask_img)
+        else:
+            # For other methods or if no faces are found, blur the whole image
+            return protected_image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
     
     return Image.fromarray(protected_array)
 
