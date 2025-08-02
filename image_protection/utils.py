@@ -377,8 +377,6 @@ def save_image(image: Image.Image, file_path: str, format: Optional[str] = None)
     except Exception:
         # Fall back to PIL
         image.save(file_path, format=format)
-    else:
-        return "UNKNOWN"
 
 
 def image_to_base64(image: Image.Image, format: str = "PNG") -> str:
@@ -657,3 +655,26 @@ def calculate_quality_score(sharpness: float, noise: float, contrast: float) -> 
     contrast_score = min(contrast / 50, 1.0) * 30
     
     return sharpness_score + noise_score + contrast_score
+def detect_faces(image: Image.Image) -> List[Tuple[int, int, int, int]]:
+    """
+    Detect faces in an image using Haar cascades.
+    
+    Args:
+        image: PIL Image
+    
+    Returns:
+        List of face bounding boxes (x, y, w, h)
+    """
+    # Convert PIL image to OpenCV format
+    img_array = np.array(image.convert('RGB'))
+    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    
+    # Load face cascade
+    # This path assumes opencv-python is installed correctly
+    face_cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
+    face_cascade = cv2.CascadeClassifier(face_cascade_path)
+    
+    # Detect faces
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    
+    return faces.tolist() if len(faces) > 0 else []

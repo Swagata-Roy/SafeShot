@@ -13,6 +13,7 @@ import torchattacks
 from torchvision.models import resnet50
 from typing import Any
 import cv2
+from image_protection.utils import detect_faces
 
 # Load a pre-trained model for feature extraction (e.g., ResNet-50)
 # In a real scenario, a face recognition model like ArcFace would be used.
@@ -42,15 +43,23 @@ def apply_faceshield(
         # Simulate attention manipulation by adding noise to salient regions.
         # This is a simplified proxy for the actual technique.
         img_array = np.array(image).astype(np.float32)
+        faces = detect_faces(image)
         
         # A real implementation would use a saliency model. Here, we'll just add noise to the center.
         h, w, _ = img_array.shape
-        center_h, center_w = h // 2, w // 2
-        mask = np.zeros((h, w, 1), dtype=np.float32)
-        cv2.circle(mask, (center_w, center_h), int(min(h, w) * 0.25), (1,), -1)
         
-        noise = np.random.randn(h, w, 3) * intensity * 255 * mask
-        protected_array = np.clip(img_array + noise, 0, 255).astype(np.uint8)
+        if faces:
+            for (x, y, w_face, h_face) in faces:
+                center_x, center_y = x + w_face // 2, y + h_face // 2
+                radius = int(min(w_face, h_face) * 0.7 * intensity)
+                
+                mask = np.zeros((h, w, 1), dtype=np.float32)
+                cv2.circle(mask, (center_x, center_y), radius, (1,), -1)
+                
+                noise = np.random.randn(h, w, 3) * intensity * 255 * mask
+                img_array = np.clip(img_array + noise, 0, 255)
+        
+        protected_array = img_array.astype(np.uint8)
         
     elif method == "embedding_disruption":
         # Use PGD attack to perturb the image embeddings
