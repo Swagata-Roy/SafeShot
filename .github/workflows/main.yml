@@ -24,7 +24,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.SAFESHOT }}
         run: |
-          echo "import os
+          cat <<EOF > sync_to_hf.py
+import os
 from huggingface_hub import HfApi
 
 api = HfApi()
@@ -34,5 +35,6 @@ api.upload_folder(
     repo_type='space',
     token=os.environ['SAFESHOT'],
     delete_patterns=['*']
-)" > sync_to_hf.py
+)
+EOF
           python sync_to_hf.py
