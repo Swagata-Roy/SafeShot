@@ -6,30 +6,33 @@ on:
       - main  # or your default branch
 
 jobs:
-  deploy:
+  sync:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
       - name: Install huggingface_hub
         run: pip install huggingface_hub
 
-      - name: Push to Hugging Face Space
+      - name: Upload to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.SAFESHOT }}
         run: |
           python -c "
 import os
 from huggingface_hub import HfApi
-
 api = HfApi()
 api.upload_folder(
-    repo_id='Swagata-Roy/SafeShot',  # Replace with your actual Space name
-    folder_path='.',                  # Root of your repo
+    repo_id='Swagata-Roy/SafeShot',
+    folder_path='.',
     repo_type='space',
     token=os.environ['SAFESHOT'],
-    delete_patterns=['*']            # Optional: clears old files before upload
+    delete_patterns=['*']
 )
 "
