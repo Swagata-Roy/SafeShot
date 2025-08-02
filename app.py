@@ -12,7 +12,8 @@ from image_protection import (
     cloak,
     style_defense,
     cropper,
-    metadata
+    metadata,
+    faceshield
 )
 
 # Type aliases
@@ -29,6 +30,10 @@ def protect_image_single(
     # Style defense options
     style_strength: float,
     texture_type: str,
+    # FaceShield options
+    faceshield_intensity: float,
+    faceshield_method: str,
+    faceshield_blur: float,
     # Cropping options
     crop_enabled: bool,
     crop_ratio: str,
@@ -72,6 +77,15 @@ def protect_image_single(
             )
             applied_methods.append("Style Defense")
             
+        elif protection_method == "FaceShield (Anti-FaceSwap)":
+            protected_image = faceshield.apply_protection(
+                protected_image,
+                faceshield_intensity=faceshield_intensity,
+                faceshield_method=faceshield_method,
+                faceshield_blur=faceshield_blur
+            )
+            applied_methods.append(f"FaceShield ({faceshield_method})")
+
         # Apply cropping if enabled
         if crop_enabled:
             protected_image = cropper.smart_crop(
@@ -121,6 +135,10 @@ def protect_images_batch(
     # Style defense options
     style_strength: float,
     texture_type: str,
+    # FaceShield options
+    faceshield_intensity: float,
+    faceshield_method: str,
+    faceshield_blur: float,
     # Cropping options
     crop_enabled: bool,
     crop_ratio: str,
@@ -154,6 +172,9 @@ def protect_images_batch(
                 cloak_method,
                 style_strength,
                 texture_type,
+                faceshield_intensity,
+                faceshield_method,
+                faceshield_blur,
                 crop_enabled,
                 crop_ratio,
                 edge_softness,
@@ -192,14 +213,12 @@ def create_interface():
     with gr.Blocks(title="SafeShot - Image Protection Tool") as app:
         gr.HTML(
             """
-    <div style="display: flex; align-items: center;">
-        <img src="/gradio_api/file=assets/logo.png" width="50" style="margin-right: 10px;"/>
-        <h1 style="margin: 0;">SafeShot - Image Protection Tool</h1>
-    </div>
-
-    <p>Protect your images from unauthorized AI training and misuse with multiple defense mechanisms.</p>
-    """
-
+            <div style="display: flex; align-items: center;">
+                <img src="/gradio_api/file=assets/logo.png" width="50" style="margin-right: 10px;"/>
+                <h1 style="margin: 0;">SafeShot - Image Protection Tool</h1>
+            </div>
+            <p>Protect your images from unauthorized AI training and misuse with multiple defense mechanisms.</p>
+            """
         )
         
         with gr.Tabs():
@@ -207,145 +226,64 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=1):
                         # Input section
-                        input_image = gr.Image(
-                            label="Upload Image",
-                            type="pil"
-                        )
+                        input_image = gr.Image(label="Upload Image", type="pil")
                         
                         protection_method = gr.Radio(
-                            choices=["Cloaking (Anti-AI)", "Style Defense", "None (Metadata Only)"],
+                            choices=["Cloaking (Anti-AI)", "Style Defense", "FaceShield (Anti-FaceSwap)", "None (Metadata Only)"],
                             value="Cloaking (Anti-AI)",
                             label="Primary Protection Method"
                         )
                         
-                        # Cloaking options
+                        # --- Options Groups ---
                         with gr.Group(visible=True) as cloak_options:
                             gr.Markdown("### Cloaking Options")
-                            cloak_intensity = gr.Slider(
-                                minimum=0.1,
-                                maximum=1.0,
-                                value=0.5,
-                                step=0.1,
-                                label="Cloaking Intensity"
-                            )
-                            cloak_method = gr.Dropdown(
-                                choices=["fawkes", "lowkey"],
-                                value="fawkes",
-                                label="Cloaking Method"
-                            )
+                            cloak_intensity = gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Cloaking Intensity")
+                            cloak_method = gr.Dropdown(choices=["fawkes", "lowkey"], value="fawkes", label="Cloaking Method")
                         
-                        # Style defense options
                         with gr.Group(visible=False) as style_options:
                             gr.Markdown("### Style Defense Options")
-                            style_strength = gr.Slider(
-                                minimum=0.1,
-                                maximum=1.0,
-                                value=0.5,
-                                step=0.1,
-                                label="Defense Strength"
-                            )
-                            texture_type = gr.Dropdown(
-                                choices=["noise", "blur", "pixelate", "swirl"],
-                                value="noise",
-                                label="Texture Type"
-                            )
+                            style_strength = gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Defense Strength")
+                            texture_type = gr.Dropdown(choices=["noise", "blur", "pixelate", "swirl"], value="noise", label="Texture Type")
                         
-                        # Cropping options
+                        with gr.Group(visible=False) as faceshield_options:
+                            gr.Markdown("### FaceShield Options")
+                            faceshield_intensity = gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Perturbation Intensity")
+                            faceshield_method = gr.Dropdown(choices=["attention_manipulation", "embedding_disruption"], value="attention_manipulation", label="Defense Method")
+                            faceshield_blur = gr.Slider(minimum=0.0, maximum=5.0, value=1.0, step=0.5, label="Imperceptibility Blur")
+
                         with gr.Group():
                             gr.Markdown("### Cropping Options")
-                            crop_enabled = gr.Checkbox(
-                                label="Enable Smart Cropping",
-                                value=False
-                            )
-                            crop_ratio = gr.Dropdown(
-                                choices=["1:1", "4:3", "16:9", "9:16", "Original"],
-                                value="Original",
-                                label="Aspect Ratio"
-                            )
-                            edge_softness = gr.Slider(
-                                minimum=0,
-                                maximum=50,
-                                value=10,
-                                step=5,
-                                label="Edge Softness (pixels)"
-                            )
-                            crop_sensitivity = gr.Dropdown(
-                                choices=["center", "face", "saliency"],
-                                value="face",
-                                label="Crop Focus (Sensitivity)"
-                            )
+                            crop_enabled = gr.Checkbox(label="Enable Smart Cropping", value=False)
+                            crop_ratio = gr.Dropdown(choices=["1:1", "4:3", "16:9", "9:16", "Original"], value="Original", label="Aspect Ratio")
+                            edge_softness = gr.Slider(minimum=0, maximum=50, value=10, step=5, label="Edge Softness (pixels)")
+                            crop_sensitivity = gr.Dropdown(choices=["center", "face", "saliency"], value="face", label="Crop Focus (Sensitivity)")
                         
-                        # Metadata options
                         with gr.Group():
                             gr.Markdown("### Metadata Options")
-                            strip_exif = gr.Checkbox(
-                                label="Strip EXIF Data",
-                                value=True
-                            )
-                            add_watermark = gr.Checkbox(
-                                label="Add Watermark",
-                                value=False
-                            )
-                            watermark_text = gr.Textbox(
-                                label="Watermark Text",
-                                placeholder="© Your Name",
-                                visible=False
-                            )
-                            watermark_image = gr.Image(
-                                label="Watermark Image",
-                                type="pil",
-                                visible=False
-                            )
-                            watermark_opacity = gr.Slider(
-                                minimum=0.1,
-                                maximum=1.0,
-                                value=0.3,
-                                step=0.1,
-                                label="Watermark Opacity",
-                                visible=False
-                            )
+                            strip_exif = gr.Checkbox(label="Strip EXIF Data", value=True)
+                            add_watermark = gr.Checkbox(label="Add Watermark", value=False)
+                            watermark_text = gr.Textbox(label="Watermark Text", placeholder="© Your Name", visible=False)
+                            watermark_image = gr.Image(label="Watermark Image", type="pil", visible=False)
+                            watermark_opacity = gr.Slider(minimum=0.1, maximum=1.0, value=0.3, step=0.1, label="Watermark Opacity", visible=False)
                         
-                        protect_btn = gr.Button(
-                            "🛡️ Protect Image",
-                            variant="primary",
-                            size="lg"
-                        )
+                        protect_btn = gr.Button("🛡️ Protect Image", variant="primary", size="lg")
                         
                     with gr.Column(scale=1):
                         # Output section
-                        output_image = gr.Image(
-                            label="Protected Image",
-                            type="pil",
-                            format="png"
-                        )
-                        status_text = gr.Textbox(
-                            label="Status",
-                            interactive=False
-                        )
-                        
+                        output_image = gr.Image(label="Protected Image", type="pil", format="png")
+                        status_text = gr.Textbox(label="Status", interactive=False)
                         with gr.Row():
-                            reset_btn = gr.Button(
-                                "🔄 Reset",
-                                variant="secondary"
-                            )
+                            reset_btn = gr.Button("🔄 Reset", variant="secondary")
                 
-                # Examples with explicit type annotation
-                examples: List[List[str]] = [
-                    ["assets/example1.png"],
-                    ["assets/example2.png"],
-                    ["assets/example3.png"]
-                ]
-                gr.Examples(
-                    examples=examples,
-                    inputs=input_image,
-                    label="Example Images"
-                )
+                examples: List[List[str]] = [["assets/example1.png"], ["assets/example2.png"], ["assets/example3.png"]]
+                gr.Examples(examples=examples, inputs=input_image, label="Example Images")
                 
-                # Event handlers
+                # --- Event Handlers (Single Image) ---
                 def update_options_visibility(method: str) -> Dict[gr.Group, GradioUpdateType]:
                     return {
                         cloak_options: gr.update(visible=(method == "Cloaking (Anti-AI)")),
-                        style_options: gr.update(visible=(method == "Style Defense"))
+                        style_options: gr.update(visible=(method == "Style Defense")),
+                        faceshield_options: gr.update(visible=(method == "FaceShield (Anti-FaceSwap)"))
                     }
                 
                 def update_watermark_visibility(enabled: bool) -> Dict[gr.Component, GradioUpdateType]:
@@ -355,164 +293,81 @@ def create_interface():
                         watermark_opacity: gr.update(visible=enabled)
                     }
                 
-                protection_method.change(
-                    update_options_visibility,
-                    inputs=[protection_method],
-                    outputs=[cloak_options, style_options]
-                )
-                
-                add_watermark.change(
-                    update_watermark_visibility,
-                    inputs=[add_watermark],
-                    outputs=[watermark_text, watermark_image, watermark_opacity]
-                )
+                protection_method.change(update_options_visibility, inputs=[protection_method], outputs=[cloak_options, style_options, faceshield_options])
+                add_watermark.change(update_watermark_visibility, inputs=[add_watermark], outputs=[watermark_text, watermark_image, watermark_opacity])
                 
                 protect_btn.click(
                     protect_image_single,
                     inputs=[
-                        input_image,
-                        protection_method,
-                        cloak_intensity,
-                        cloak_method,
-                        style_strength,
-                        texture_type,
-                        crop_enabled,
-                        crop_ratio,
-                        edge_softness,
-                        crop_sensitivity,
-                        strip_exif,
-                        add_watermark,
-                        watermark_text,
-                        watermark_opacity,
-                        watermark_image
+                        input_image, protection_method,
+                        cloak_intensity, cloak_method,
+                        style_strength, texture_type,
+                        faceshield_intensity, faceshield_method, faceshield_blur,
+                        crop_enabled, crop_ratio, edge_softness, crop_sensitivity,
+                        strip_exif, add_watermark, watermark_text, watermark_opacity, watermark_image
                     ],
                     outputs=[output_image, status_text]
                 )
                 
-                # Reset function with proper type hints
                 def reset_fn() -> Tuple[None, None, str]:
                     return None, None, "Ready to protect a new image."
-
-                reset_btn.click(
-                    reset_fn,
-                    outputs=[input_image, output_image, status_text]
-                )
+                reset_btn.click(reset_fn, outputs=[input_image, output_image, status_text])
 
             with gr.TabItem("Batch Processing"):
                 with gr.Row():
                     with gr.Column(scale=1):
-                        batch_input_images = gr.File(
-                            label="Upload Images",
-                            file_count="multiple",
-                            file_types=["image"]
-                        )
+                        batch_input_images = gr.File(label="Upload Images", file_count="multiple", file_types=["image"])
                         
                         batch_protection_method = gr.Radio(
-                            choices=["Cloaking (Anti-AI)", "Style Defense", "None (Metadata Only)"],
+                            choices=["Cloaking (Anti-AI)", "Style Defense", "FaceShield (Anti-FaceSwap)", "None (Metadata Only)"],
                             value="Cloaking (Anti-AI)",
                             label="Primary Protection Method"
                         )
                         
+                        # --- Options Groups (Batch) ---
                         with gr.Group(visible=True) as batch_cloak_options:
                             gr.Markdown("### Cloaking Options")
-                            batch_cloak_intensity = gr.Slider(
-                                minimum=0.1,
-                                maximum=1.0,
-                                value=0.5,
-                                step=0.1,
-                                label="Cloaking Intensity"
-                            )
-                            batch_cloak_method = gr.Dropdown(
-                                choices=["Fawkes-style", "LowKey-style"],
-                                value="Fawkes-style",
-                                label="Cloaking Method"
-                            )
+                            batch_cloak_intensity = gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Cloaking Intensity")
+                            batch_cloak_method = gr.Dropdown(choices=["Fawkes-style", "LowKey-style"], value="Fawkes-style", label="Cloaking Method")
                         
                         with gr.Group(visible=False) as batch_style_options:
                             gr.Markdown("### Style Defense Options")
-                            batch_style_strength = gr.Slider(
-                                minimum=0.1,
-                                maximum=1.0,
-                                value=0.5,
-                                step=0.1,
-                                label="Defense Strength"
-                            )
-                            batch_texture_type = gr.Dropdown(
-                                choices=["noise", "blur", "pixelate", "swirl"],
-                                value="noise",
-                                label="Texture Type"
-                            )
+                            batch_style_strength = gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Defense Strength")
+                            batch_texture_type = gr.Dropdown(choices=["noise", "blur", "pixelate", "swirl"], value="noise", label="Texture Type")
                         
+                        with gr.Group(visible=False) as batch_faceshield_options:
+                            gr.Markdown("### FaceShield Options")
+                            batch_faceshield_intensity = gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Perturbation Intensity")
+                            batch_faceshield_method = gr.Dropdown(choices=["attention_manipulation", "embedding_disruption"], value="attention_manipulation", label="Defense Method")
+                            batch_faceshield_blur = gr.Slider(minimum=0.0, maximum=5.0, value=1.0, step=0.5, label="Imperceptibility Blur")
+
                         with gr.Group():
                             gr.Markdown("### Cropping Options")
-                            batch_crop_enabled = gr.Checkbox(
-                                label="Enable Smart Cropping",
-                                value=False
-                            )
-                            batch_crop_ratio = gr.Dropdown(
-                                choices=["1:1", "4:3", "16:9", "9:16", "Original"],
-                                value="Original",
-                                label="Aspect Ratio"
-                            )
-                            batch_edge_softness = gr.Slider(
-                                minimum=0,
-                                maximum=50,
-                                value=10,
-                                step=5,
-                                label="Edge Softness (pixels)"
-                            )
-                            batch_crop_sensitivity = gr.Dropdown(
-                                choices=["center", "face", "saliency"],
-                                value="face",
-                                label="Crop Focus (Sensitivity)"
-                            )
+                            batch_crop_enabled = gr.Checkbox(label="Enable Smart Cropping", value=False)
+                            batch_crop_ratio = gr.Dropdown(choices=["1:1", "4:3", "16:9", "9:16", "Original"], value="Original", label="Aspect Ratio")
+                            batch_edge_softness = gr.Slider(minimum=0, maximum=50, value=10, step=5, label="Edge Softness (pixels)")
+                            batch_crop_sensitivity = gr.Dropdown(choices=["center", "face", "saliency"], value="face", label="Crop Focus (Sensitivity)")
                         
                         with gr.Group():
                             gr.Markdown("### Metadata Options")
-                            batch_strip_exif = gr.Checkbox(
-                                label="Strip EXIF Data",
-                                value=True
-                            )
-                            batch_add_watermark = gr.Checkbox(
-                                label="Add Watermark",
-                                value=False
-                            )
-                            batch_watermark_text = gr.Textbox(
-                                label="Watermark Text",
-                                placeholder="© Your Name",
-                                visible=False
-                            )
-                            batch_watermark_image = gr.Image(
-                                label="Watermark Image",
-                                type="pil",
-                                visible=False
-                            )
-                            batch_watermark_opacity = gr.Slider(
-                                minimum=0.1,
-                                maximum=1.0,
-                                value=0.3,
-                                step=0.1,
-                                label="Watermark Opacity",
-                                visible=False
-                            )
+                            batch_strip_exif = gr.Checkbox(label="Strip EXIF Data", value=True)
+                            batch_add_watermark = gr.Checkbox(label="Add Watermark", value=False)
+                            batch_watermark_text = gr.Textbox(label="Watermark Text", placeholder="© Your Name", visible=False)
+                            batch_watermark_image = gr.Image(label="Watermark Image", type="pil", visible=False)
+                            batch_watermark_opacity = gr.Slider(minimum=0.1, maximum=1.0, value=0.3, step=0.1, label="Watermark Opacity", visible=False)
                         
-                        batch_protect_btn = gr.Button(
-                            "🛡️ Protect All Images",
-                            variant="primary",
-                            size="lg"
-                        )
+                        batch_protect_btn = gr.Button("🛡️ Protect All Images", variant="primary", size="lg")
                         
                     with gr.Column(scale=1):
                         batch_output_file = gr.File(label="Download Protected Images (Zip)")
-                        batch_status_text = gr.Textbox(
-                            label="Status",
-                            interactive=False
-                        )
+                        batch_status_text = gr.Textbox(label="Status", interactive=False)
 
+                # --- Event Handlers (Batch) ---
                 def batch_update_options_visibility(method: str) -> Dict[gr.Group, GradioUpdateType]:
                     return {
                         batch_cloak_options: gr.update(visible=(method == "Cloaking (Anti-AI)")),
-                        batch_style_options: gr.update(visible=(method == "Style Defense"))
+                        batch_style_options: gr.update(visible=(method == "Style Defense")),
+                        batch_faceshield_options: gr.update(visible=(method == "FaceShield (Anti-FaceSwap)"))
                     }
                 
                 def batch_update_watermark_visibility(enabled: bool) -> Dict[gr.Component, GradioUpdateType]:
@@ -522,36 +377,18 @@ def create_interface():
                         batch_watermark_opacity: gr.update(visible=enabled)
                     }
                 
-                batch_protection_method.change(
-                    batch_update_options_visibility,
-                    inputs=[batch_protection_method],
-                    outputs=[batch_cloak_options, batch_style_options]
-                )
-                
-                batch_add_watermark.change(
-                    batch_update_watermark_visibility,
-                    inputs=[batch_add_watermark],
-                    outputs=[batch_watermark_text, batch_watermark_image, batch_watermark_opacity]
-                )
+                batch_protection_method.change(batch_update_options_visibility, inputs=[batch_protection_method], outputs=[batch_cloak_options, batch_style_options, batch_faceshield_options])
+                batch_add_watermark.change(batch_update_watermark_visibility, inputs=[batch_add_watermark], outputs=[batch_watermark_text, batch_watermark_image, batch_watermark_opacity])
 
                 batch_protect_btn.click(
                     protect_images_batch,
                     inputs=[
-                        batch_input_images,
-                        batch_protection_method,
-                        batch_cloak_intensity,
-                        batch_cloak_method,
-                        batch_style_strength,
-                        batch_texture_type,
-                        batch_crop_enabled,
-                        batch_crop_ratio,
-                        batch_edge_softness,
-                        batch_crop_sensitivity,
-                        batch_strip_exif,
-                        batch_add_watermark,
-                        batch_watermark_text,
-                        batch_watermark_opacity,
-                        batch_watermark_image
+                        batch_input_images, batch_protection_method,
+                        batch_cloak_intensity, batch_cloak_method,
+                        batch_style_strength, batch_texture_type,
+                        batch_faceshield_intensity, batch_faceshield_method, batch_faceshield_blur,
+                        batch_crop_enabled, batch_crop_ratio, batch_edge_softness, batch_crop_sensitivity,
+                        batch_strip_exif, batch_add_watermark, batch_watermark_text, batch_watermark_opacity, batch_watermark_image
                     ],
                     outputs=[batch_output_file, batch_status_text]
                 )
@@ -585,6 +422,14 @@ def create_interface():
                         </ul>
                         <p><strong>Best for:</strong> Artistic content, social media posts, creative portfolios</p>
                         
+                        <h3 style="color: #e74c3c;">3. FaceShield (Anti-FaceSwap)</h3>
+                        <p><strong>What it does:</strong> Disrupts facial recognition models by applying adversarial perturbations to image embeddings. This makes it difficult for models like InsightFace to extract reliable facial features, thus protecting against face swapping and deepfakes.</p>
+                        <ul>
+                            <li><strong>Attention Manipulation:</strong> Adds noise to salient (important) regions of the face to confuse the model's focus.</li>
+                            <li><strong>Embedding Disruption:</strong> Uses adversarial attacks (like PGD) to subtly alter the image in a way that corrupts its feature embedding.</li>
+                        </ul>
+                        <p><strong>Best for:</strong> Protecting profile pictures, headshots, and any images where facial identity is important.</p>
+
                         <h2 style="color: #3498db;">✂️ Smart Cropping</h2>
                         <p><strong>What it does:</strong> Intelligently crops images to remove sensitive areas while preserving important content.</p>
                         <ul>

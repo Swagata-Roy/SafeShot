@@ -7,6 +7,7 @@ SafeShot is a comprehensive image protection tool designed to safeguard your pho
 ### Protection Methods
 - **AI Cloaking (Anti-AI)**: Adds imperceptible adversarial noise to prevent AI models from learning from your images
 - **Style Defense**: Applies texture warping and blending techniques to disrupt style transfer and AI analysis
+- **FaceShield (Anti-FaceSwap)**: Disrupts facial recognition models to protect against face swapping and deepfakes.
 - **Smart Cropping**: Intelligently crops images with soft edges and enhanced face detection to remove identifying features
 - **Metadata Protection**: Strips EXIF data more robustly and adds customizable watermarks
 
@@ -46,7 +47,7 @@ The application will open in your browser at `http://localhost:7860`
 
 ### Basic Usage
 1. **Upload Image**: Drag and drop or click to upload your image
-2. **Select Protection Method**: Choose from Cloaking, Style Defense
+2. **Select Protection Method**: Choose from Cloaking, Style Defense, or FaceShield
 3. **Configure Options**: Adjust protection intensity and other parameters
 4. **Apply Protection**: Click "Protect Image" to apply selected protections
 5. **Download**: Save the protected image to your device
@@ -60,6 +61,11 @@ The application will open in your browser at `http://localhost:7860`
 #### Style Defense
 - **Strength**: Controls texture warping intensity (0.1-1.0)
 - **Texture Type**: Select from subtle, moderate, or aggressive texture patterns
+
+#### FaceShield (Anti-FaceSwap)
+- **Perturbation Intensity**: Controls the strength of the adversarial attack on facial embeddings.
+- **Defense Method**: Choose between `attention_manipulation` and `embedding_disruption`.
+- **Imperceptibility Blur**: Applies a Gaussian blur to make the perturbations less visible.
 
 #### Smart Cropping
 - **Aspect Ratio**: Maintain or change image proportions
@@ -87,6 +93,7 @@ SafeShot/
 │   ├── cropper.py              # Smart cropping with edge softening
 │   ├── metadata.py             # EXIF scrubbing & watermarking
 │   ├── style_defense.py        # Texture warping & blending
+│   ├── faceshield.py           # Face-swapping and deepfake defense
 │   ├── utils.py                # Shared image utilities
 │   └── version.py              # Version metadata
 ├── assets/                     # Logo & example images
