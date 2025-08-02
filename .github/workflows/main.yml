@@ -24,17 +24,15 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.SAFESHOT }}
         run: |
-          cat <<EOF > sync_to_hf.py
-import os
-from huggingface_hub import HfApi
-
-api = HfApi()
-api.upload_folder(
-    repo_id='Swagata-Roy/SafeShot',
-    folder_path='.',
-    repo_type='space',
-    token=os.environ['SAFESHOT'],
-    delete_patterns=['*']
-)
-EOF
+          echo "import os" > sync_to_hf.py
+          echo "from huggingface_hub import HfApi" >> sync_to_hf.py
+          echo "" >> sync_to_hf.py
+          echo "api = HfApi()" >> sync_to_hf.py
+          echo "api.upload_folder(" >> sync_to_hf.py
+          echo "    repo_id='Swagata-Roy/SafeShot'," >> sync_to_hf.py
+          echo "    folder_path='.'," >> sync_to_hf.py
+          echo "    repo_type='space'," >> sync_to_hf.py
+          echo "    token=os.environ['SAFESHOT']," >> sync_to_hf.py
+          echo "    delete_patterns=['*']" >> sync_to_hf.py
+          echo ")" >> sync_to_hf.py
           python sync_to_hf.py
