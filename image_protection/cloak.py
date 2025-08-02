@@ -9,7 +9,8 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image
 import cv2
-from image_protection.cropper import _detect_face_center
+from typing import Dict, Any
+from image_protection.utils import detect_faces
 
 
 def apply_cloaking(
@@ -60,20 +61,28 @@ def _apply_fawkes_style_cloaking(
     # Apply noise primarily to face-like regions (simplified detection)
     if len(img_array.shape) == 3:
         # For color images
+        img_for_face_detection = img_array
+        if img_array.shape[2] == 4:
+            img_for_face_detection = img_array[:,:,:3]
         face_mask = np.zeros(img_array.shape[:2], dtype=np.float32)
-        face_center = _detect_face_center(Image.fromarray(img_array))
-        if face_center:
-            cx, cy = face_center
-            h, w = img_array.shape[:2]
-            y, x = np.ogrid[:h, :w]
-            face_mask = np.exp(-((x - cx)**2 + (y - cy)**2) / (2 * (min(h, w) / 4)**2))
+        faces = detect_faces(Image.fromarray(img_for_face_detection))
+        if faces:
+            for x_face, y_face, w_face, h_face in faces:
+                cx = x_face + w_face // 2
+                cy = y_face + h_face // 2
+                h, w = img_array.shape[:2]
+                y, x = np.ogrid[:h, :w]
+                face_mask += np.exp(-((x - cx)**2 + (y - cy)**2) / (2 * (min(h, w) / 4)**2))
         
         # Expand mask to 3 channels
         face_mask_3d = np.stack([face_mask] * 3, axis=-1)
         
         # Apply perturbation with face-aware masking
         perturbed = img_array.astype(np.float32)
-        perturbed += noise * face_mask_3d * intensity * 15
+        if perturbed.shape[2] == 4:
+            perturbed[:,:,:3] += noise * face_mask_3d * intensity * 15
+        else:
+            perturbed += noise * face_mask_3d * intensity * 15
     else:
         # For grayscale images
         perturbed = img_array.astype(np.float32)
@@ -195,7 +204,10 @@ def _generate_edge_aware_noise(
     """Generate noise that's stronger near edges."""
     # Convert to grayscale for edge detection
     if len(img_array.shape) == 3:
-        gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+        if img_array.shape[2] == 4:
+            gray = cv2.cvtColor(img_array[:,:,:3], cv2.COLOR_RGB2GRAY)
+        else:
+            gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
     else:
         gray = img_array
     
@@ -211,7 +223,7 @@ def _generate_edge_aware_noise(
     edges = cv2.GaussianBlur(edges, (15, 15), 0)
     
     # Generate noise
-    noise = np.random.randn(*img_array.shape) * intensity * 10
+    noise = np.random.randn(img_array.shape[0], img_array.shape[1], 3) * intensity * 10
     
     # Apply edge mask
     if len(img_array.shape) == 3:
@@ -220,14 +232,16 @@ def _generate_edge_aware_noise(
         edge_mask = edges
     
     edge_aware_noise = noise * edge_mask
+    if img_array.shape[2] == 4:
+        edge_aware_noise = np.dstack((edge_aware_noise, np.zeros(img_array.shape[:2])))
     
-    return edge_aware_noise
+    return edge_aware_noise.astype(np.float32)
 
 
 def validate_cloaking_effectiveness(
     original: Image.Image,
     cloaked: Image.Image
-) -> dict:
+) -> Dict[str, Any]:
     """
     Validate the effectiveness of cloaking.
     
@@ -285,7 +299,7 @@ def _calculate_ssim(img1: npt.NDArray[np.uint8], img2: npt.NDArray[np.uint8]) ->
         (mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2)
     )
     
-    return np.mean(ssim_map)
+    return float(np.mean(ssim_map))
 
 
 def _assess_quality(psnr: float, ssim: float) -> str:

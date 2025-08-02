@@ -9,14 +9,9 @@ import numpy as np
 import numpy.typing as npt
 from PIL import Image, ImageDraw, ImageFilter
 import cv2
-from typing import Any
-import mediapipe as mp  # type: ignore
 from typing import Tuple, Optional
 import math
-
-# Initialize MediaPipe Face Detection
-mp_face_detection: Any = mp.solutions.face_detection  # type: ignore
-mp_drawing: Any = mp.solutions.drawing_utils  # type: ignore
+from image_protection.utils import detect_faces
 
 
 def smart_crop(
@@ -152,9 +147,11 @@ def _find_optimal_crop(
     
     elif focus_mode == "face":
         # Try to detect faces and crop around them
-        face_center = _detect_face_center(image)
-        if face_center:
-            cx, cy = face_center
+        faces = detect_faces(image)
+        if faces:
+            x, y, w, h = faces[0]
+            cx = x + w // 2
+            cy = y + h // 2
             left = max(0, min(width - target_width, cx - target_width // 2))
             top = max(0, min(height - target_height, cy - target_height // 2))
         else:
@@ -180,39 +177,6 @@ def _find_optimal_crop(
     return (left, top, right, bottom)
 
 
-def _detect_face_center(image: Image.Image) -> Optional[Tuple[int, int]]:
-    """
-    Detect face center using MediaPipe Face Detection.
-    """
-    # Convert PIL Image to OpenCV format (RGB to BGR)
-    image_np = np.array(image)
-    image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)  # type: ignore
-
-    with mp_face_detection.FaceDetection(
-        model_selection=1, min_detection_confidence=0.5
-    ) as face_detection:  # type: ignore
-        results: Any = face_detection.process(image_np)  # type: ignore
-
-        if results and hasattr(results, 'detections') and results.detections:
-            detections: Any = results.detections
-            detection = detections[0]
-            if hasattr(detection, 'location_data') and detection.location_data and hasattr(detection.location_data, 'relative_bounding_box'):
-                location_data: Any = detection.location_data
-                bbox_c = location_data.relative_bounding_box
-                ih, iw, _ = image_np.shape
-                
-                # Convert normalized coordinates to pixel coordinates
-                x = int(getattr(bbox_c, 'xmin', 0) * iw)
-                y = int(getattr(bbox_c, 'ymin', 0) * ih)
-                w = int(getattr(bbox_c, 'width', 0) * iw)
-                h = int(getattr(bbox_c, 'height', 0) * ih)
-                
-                # Calculate center of the bounding box
-                cx = x + w // 2
-                cy = y + h // 2
-                return (cx, cy)
-    
-    return None
 
 
 def _detect_salient_region(image: Image.Image) -> Tuple[int, int]:
@@ -480,12 +444,14 @@ def _generate_sensitivity_map(image: Image.Image) -> npt.NDArray[np.float32]:
     sensitivity = np.zeros((height, width), dtype=np.float32)
     
     # Add face detection sensitivity
-    face_center = _detect_face_center(image)
-    if face_center:
-        cx, cy = face_center
-        Y, X = np.ogrid[:height, :width]
-        face_mask = np.exp(-((X - cx)**2 + (Y - cy)**2) / (2 * (width / 4)**2))
-        sensitivity += face_mask * 0.5
+    faces = detect_faces(image)
+    if faces:
+        for x, y, w, h in faces:
+            cx = x + w // 2
+            cy = y + h // 2
+            Y, X = np.ogrid[:height, :width]
+            face_mask = np.exp(-((X - cx)**2 + (Y - cy)**2) / (2 * (width / 4)**2))
+            sensitivity += face_mask * 0.5
     
     # Add edge sensitivity (edges often contain identifying features)
     if len(img_array.shape) == 3:
@@ -568,14 +534,22 @@ def _apply_privacy_blur(
     
     # Apply selective blur
     img_array = np.array(image)
-    blurred = cv2.GaussianBlur(img_array, (21, 21), 0)  # type: ignore
     
-    # Blend based on sensitivity
-    if len(img_array.shape) == 3:
-        sensitivity_3d = np.stack([cropped_sensitivity] * 3, axis=-1)  # type: ignore
+    # Handle RGBA images
+    if img_array.shape[2] == 4:
+        rgb_array = img_array[:, :, :3]
+        alpha_channel = img_array[:, :, 3]
+        blurred_rgb = cv2.GaussianBlur(rgb_array, (21, 21), 0)
+        sensitivity_3d = np.stack([cropped_sensitivity] * 3, axis=-1)
+        result_rgb = rgb_array * (1 - sensitivity_3d * 0.5) + blurred_rgb * (sensitivity_3d * 0.5)
+        result = np.dstack((result_rgb, alpha_channel))
     else:
-        sensitivity_3d = cropped_sensitivity
+        blurred = cv2.GaussianBlur(img_array, (21, 21), 0)  # type: ignore
+        # Blend based on sensitivity
+        if len(img_array.shape) == 3:
+            sensitivity_3d = np.stack([cropped_sensitivity] * 3, axis=-1)  # type: ignore
+        else:
+            sensitivity_3d = cropped_sensitivity
+        result = img_array * (1 - sensitivity_3d * 0.5) + blurred * (sensitivity_3d * 0.5)  # type: ignore
     
-    result = img_array * (1 - sensitivity_3d * 0.5) + blurred * (sensitivity_3d * 0.5)  # type: ignore
-    
-    return Image.fromarray(result.astype(np.uint8))  # type: ignore
+    return Image.fromarray(result.astype(np.uint8))

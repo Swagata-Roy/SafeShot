@@ -1,4 +1,4 @@
-# 🛡️ SafeShot - Image Protection Tool
+# <img src="https://raw.githubusercontent.com/Swagata-Roy/SafeShot/main/assets/logo.png" alt="SafeShot Logo" width="32"/> SafeShot - Image Protection Tool
 
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/Swagata-Roy/SafeShot)
 

@@ -100,6 +100,12 @@ def apply_adversarial_embedding(
     """
     Applies adversarial embedding perturbations using a specified attack.
     """
+    # Store original size
+    original_size = image.size
+    
+    # Convert to RGB
+    image = image.convert("RGB")
+
     # Normalize the image for the model
     normalize = T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     img_t = normalize(transform(image)).unsqueeze(0)
@@ -121,6 +127,9 @@ def apply_adversarial_embedding(
     # Convert back to PIL Image
     # The output of torchattacks is already in the [0,1] range, so we just need to convert to PIL
     pil_image = T.ToPILImage()(perturbed_t.squeeze(0).cpu())
+
+    # Resize back to original size
+    pil_image = pil_image.resize(original_size, Image.Resampling.LANCZOS)
     
     return pil_image
 

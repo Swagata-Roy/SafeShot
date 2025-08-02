@@ -4,7 +4,7 @@ Utility functions for image processing and protection.
 This module contains reusable helper functions for various image operations.
 """
 
-from typing import Tuple, List, Optional, Dict, cast
+from typing import Tuple, List, Optional, Dict, cast, Any
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
@@ -12,6 +12,7 @@ import cv2
 import base64
 import io
 import imageio.v3 as iio
+import mediapipe as mp
 
 # Type aliases
 NDArray = npt.NDArray[np.float64]
@@ -657,7 +658,7 @@ def calculate_quality_score(sharpness: float, noise: float, contrast: float) -> 
     return sharpness_score + noise_score + contrast_score
 def detect_faces(image: Image.Image) -> List[Tuple[int, int, int, int]]:
     """
-    Detect faces in an image using Haar cascades.
+    Detect faces in an image using MediaPipe Face Detection.
     
     Args:
         image: PIL Image
@@ -665,16 +666,25 @@ def detect_faces(image: Image.Image) -> List[Tuple[int, int, int, int]]:
     Returns:
         List of face bounding boxes (x, y, w, h)
     """
-    # Convert PIL image to OpenCV format
-    img_array = np.array(image.convert('RGB'))
-    gray = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
+    mp_face_detection = mp.solutions.face_detection
     
-    # Load face cascade
-    # This path assumes opencv-python is installed correctly
-    face_cascade_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-    face_cascade = cv2.CascadeClassifier(face_cascade_path)
+    image_np = np.array(image.convert('RGB'))
     
-    # Detect faces
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    
-    return faces.tolist() if len(faces) > 0 else []
+    with mp_face_detection.FaceDetection(
+        model_selection=1, min_detection_confidence=0.5
+    ) as face_detection:
+        results = face_detection.process(image_np)
+        
+        face_boxes = []
+        if results.detections:
+            for detection in results.detections:
+                bbox_c = detection.location_data.relative_bounding_box
+                ih, iw, _ = image_np.shape
+                x, y, w, h = (
+                    int(bbox_c.xmin * iw),
+                    int(bbox_c.ymin * ih),
+                    int(bbox_c.width * iw),
+                    int(bbox_c.height * ih),
+                )
+                face_boxes.append((x, y, w, h))
+        return face_boxes

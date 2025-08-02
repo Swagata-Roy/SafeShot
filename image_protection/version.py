@@ -16,9 +16,10 @@ VERSION_INFO = (1, 0, 0)
 # Protection methods available
 PROTECTION_METHODS = [
     "cloak",
-    "style_defense", 
+    "style_defense",
     "cropper",
-    "metadata"
+    "metadata",
+    "faceshield"
 ]
 
 # Configuration type definitions
