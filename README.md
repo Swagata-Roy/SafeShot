@@ -1,8 +1,16 @@
 # 🛡️ SafeShot - Image Protection Tool
 
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/Swagata-Roy/SafeShot)
+
 SafeShot is a comprehensive image protection tool designed to safeguard your photos from unauthorized AI training and misuse. It provides multiple defense mechanisms including AI cloaking, style defense, smart cropping, and metadata protection.
 
-## 🚀 Features
+## 🚀 Live Demo
+
+You can try SafeShot live on Hugging Face Spaces:
+
+[**https://huggingface.co/spaces/Swagata-Roy/SafeShot**](https://huggingface.co/spaces/Swagata-Roy/SafeShot)
+
+## ✨ Features
 
 ### Protection Methods
 - **AI Cloaking (Anti-AI)**: Adds imperceptible adversarial noise to prevent AI models from learning from your images
@@ -32,6 +40,7 @@ pip install -r requirements.txt
 ### Quick Start
 ```bash
 # Clone or download the project
+git clone https://github.com/Swagata-Roy/SafeShot.git
 cd SafeShot
 
 # Install dependencies
@@ -41,7 +50,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The application will open in your browser at `http://localhost:7860`
+The application will open in your browser at `http://localhost:7861`
 
 ## 🎯 Usage
 
@@ -204,7 +213,7 @@ pip install opencv-python
 - Close unnecessary browser tabs
 
 ### Getting Help
-- Check the [Issues](https://github.com/your-repo/SafeShot/issues) page
+- Check the [Issues](https://github.com/Swagata-Roy/SafeShot/issues) page
 - Review error logs in the terminal
 - Try with example images first
 
@@ -233,8 +242,8 @@ This project is licensed under the Apache-2.0 license - see the [LICENSE](LICENS
 
 ## 📞 Contact
 
-- **Issues**: [GitHub Issues](https://github.com/your-repo/SafeShot/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/SafeShot/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Swagata-Roy/SafeShot/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Swagata-Roy/SafeShot/discussions)
 ---
 
 **⚠️ Disclaimer**: While SafeShot provides strong protection against many AI systems, no protection method is 100% effective. Use multiple protection methods for best results.
