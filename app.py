@@ -315,7 +315,8 @@ def create_interface():
                         # Output section
                         output_image = gr.Image(
                             label="Protected Image",
-                            type="pil"
+                            type="pil",
+                            format="png"
                         )
                         status_text = gr.Textbox(
                             label="Status",

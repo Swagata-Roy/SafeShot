@@ -11,6 +11,7 @@ from PIL import Image
 import cv2
 import base64
 import io
+import imageio.v3 as iio
 
 # Type aliases
 NDArray = npt.NDArray[np.float64]
@@ -326,6 +327,56 @@ def detect_image_format(image_data: bytes) -> str:
         return "TIFF"
     elif image_data.startswith(b'RIFF') and image_data[8:12] == b'WEBP':
         return "WEBP"
+    else:
+        # Try to detect with imageio
+        try:
+            with io.BytesIO(image_data) as buffer:
+                img_array = iio.imread(buffer)
+                format = getattr(img_array, 'meta', {}).get('format', 'UNKNOWN')
+                return format.upper() if format != 'UNKNOWN' else "UNKNOWN"
+        except Exception:
+            return "UNKNOWN"
+
+def load_image(file_path: str) -> Image.Image:
+    """
+    Load an image from file with extended format support using imageio.
+
+    Args:
+        file_path: Path to image file
+
+    Returns:
+        PIL Image
+    """
+    try:
+        # Try to read with imageio first (supports more formats)
+        img_array = iio.imread(file_path)
+        return Image.fromarray(img_array)
+    except Exception:
+        # Fall back to PIL for formats imageio doesn't handle
+        return Image.open(file_path)
+
+def save_image(image: Image.Image, file_path: str, format: Optional[str] = None) -> None:
+    """
+    Save an image with extended format support using imageio.
+
+    Args:
+        image: PIL Image to save
+        file_path: Destination path
+        format: Optional format override
+    """
+    try:
+        # Convert to array for imageio
+        img_array = np.array(image)
+
+        # Determine format if not specified
+        if format is None:
+            format = file_path.split('.')[-1].upper()
+
+        # Try to write with imageio first
+        iio.imwrite(file_path, img_array, format=format)
+    except Exception:
+        # Fall back to PIL
+        image.save(file_path, format=format)
     else:
         return "UNKNOWN"
 
