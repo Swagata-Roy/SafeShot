@@ -29,7 +29,7 @@ api.upload_folder(
     repo_id='Swagata-Roy/SafeShot',  # Replace with your actual Space name
     folder_path='.',                  # Root of your repo
     repo_type='space',
-    token=os.environ['SafeShot'],
+    token=os.environ['SAFESHOT'],
     delete_patterns=['*']            # Optional: clears old files before upload
 )
 "
