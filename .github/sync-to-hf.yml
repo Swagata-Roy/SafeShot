@@ -1,0 +1,35 @@
+name: Sync to Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install huggingface_hub
+        run: pip install huggingface_hub
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python -c "
+import os
+from huggingface_hub import HfApi
+
+api = HfApi()
+api.upload_folder(
+    repo_id='Swagata-Roy/SafeShot',  # Replace with your actual Space name
+    folder_path='.',                  # Root of your repo
+    repo_type='space',
+    token=os.environ['SafeShot'],
+    delete_patterns=['*']            # Optional: clears old files before upload
+)
+"
