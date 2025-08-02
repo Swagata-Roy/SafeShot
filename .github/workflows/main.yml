@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Install huggingface_hub
         run: pip install huggingface_hub
@@ -24,9 +24,9 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.SAFESHOT }}
         run: |
-          python -c "
-import os
+          echo "import os
 from huggingface_hub import HfApi
+
 api = HfApi()
 api.upload_folder(
     repo_id='Swagata-Roy/SafeShot',
@@ -34,5 +34,5 @@ api.upload_folder(
     repo_type='space',
     token=os.environ['SAFESHOT'],
     delete_patterns=['*']
-)
-"
+)" > sync_to_hf.py
+          python sync_to_hf.py
