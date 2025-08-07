@@ -40,6 +40,7 @@ def apply_faceshield(
     image = image.convert("RGB") # Ensure image is in RGB format
     faces = detect_faces(image)
     
+    protected_image = None
     if method == "attention_manipulation":
         # Simulate attention manipulation by adding noise to salient regions.
         img_array = np.array(image).astype(np.float32)
@@ -54,12 +55,13 @@ def apply_faceshield(
             
             noise = np.random.randn(h, w, 3) * intensity * 255 * noise_mask
             protected_array = np.clip(img_array + noise, 0, 255).astype(np.uint8)
+            protected_image = Image.fromarray(protected_array)
         else:
-            protected_array = img_array.astype(np.uint8)
+            protected_image = image
         
     elif method == "embedding_disruption":
         # Use PGD attack to perturb the image embeddings
-        return apply_adversarial_embedding(image, attack_method="pgd", epsilon=intensity * 0.1)
+        protected_image = apply_adversarial_embedding(image, attack_method="pgd", epsilon=intensity * 0.1)
         
     else:
         # Default to returning the original image if method is unknown
@@ -67,7 +69,6 @@ def apply_faceshield(
 
     # Apply Gaussian blur for imperceptibility
     if blur_radius > 0:
-        protected_image = Image.fromarray(protected_array)
         if method == "attention_manipulation" and faces:
             # Blur only the face regions
             blurred_image = protected_image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
@@ -89,7 +90,7 @@ def apply_faceshield(
             # For other methods or if no faces are found, blur the whole image
             return protected_image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
     
-    return Image.fromarray(protected_array)
+    return protected_image
 
 
 def apply_adversarial_embedding(
