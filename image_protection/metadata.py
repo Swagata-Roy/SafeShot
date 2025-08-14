@@ -113,9 +113,10 @@ def add_watermark(
     text: str,
     opacity: float = 0.3,
     position: str = "bottom-right",
-    font_size: Optional[int] = None,
+    font_size: int = 50,
     color: Tuple[int, int, int] = (255, 255, 255),
-    shadow: bool = True
+    shadow: bool = True,
+    font_path: str = "assets/Classica.ttf"
 ) -> Image.Image:
     """
     Add a text watermark to an image.
@@ -125,9 +126,10 @@ def add_watermark(
         text: Watermark text
         opacity: Watermark opacity (0.0 to 1.0)
         position: Position of watermark ("bottom-right", "bottom-left", "top-right", "top-left", "center")
-        font_size: Font size (auto-calculated if None)
+        font_size: Font size in pixels.
         color: RGB color tuple for watermark
         shadow: Whether to add shadow for better visibility
+        font_path: Path to the font file to use.
     
     Returns:
         Watermarked PIL Image
@@ -141,19 +143,12 @@ def add_watermark(
     watermark = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(watermark)
     
-    # Calculate font size if not provided
-    if font_size is None:
-        font_size = max(20, min(width, height) // 20)
-    
-    # Try to load a nice font, fallback to default
+    # Load the font
     try:
-        font = ImageFont.truetype("arial.ttf", font_size)
-    except:
-        try:
-            font = ImageFont.truetype("Arial.ttf", font_size)
-        except:
-            # Use default font
-            font = ImageFont.load_default()
+        font = ImageFont.truetype(font_path, font_size)
+    except IOError:
+        # Fallback to a basic default font if the specified font is not found
+        font = ImageFont.load_default()
     
     # Get text dimensions
     bbox = draw.textbbox((0, 0), text, font=font)
