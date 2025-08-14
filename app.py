@@ -518,6 +518,7 @@ def create_interface():
                             <li><strong>Text Watermark:</strong> Adds custom text overlays</li>
                             <li><strong>Image Watermark:</strong> Embeds logo or signature images</li>
                             <li><strong>Opacity Control:</strong> Adjust watermark transparency</li>
+                            <li><strong>Invisible Watermark:</strong> Embed a hidden message (signature) into the image using LSB steganography. This is useful for proving ownership later.</li>
                         </ul>
                         
                         <h2 style="color: #3498db;">📋 How to Use</h2>
@@ -539,6 +540,7 @@ def create_interface():
                                     <li>Enable <strong>Smart Cropping</strong> to resize/crop</li>
                                     <li>Enable <strong>Strip EXIF</strong> to remove metadata</li>
                                     <li>Add <strong>watermarks</strong> for branding/copyright</li>
+                                    <li>Enable <strong>Invisible Watermark</strong> and enter a secret message to embed it in the image.</li>
                                 </ul>
                             </li>
                             <li>Click <strong>"🛡️ Protect Image"</strong></li>
@@ -552,6 +554,14 @@ def create_interface():
                             <li>Configure protection settings (same as single image)</li>
                             <li>Click <strong>"🛡️ Protect All Images"</strong></li>
                             <li>Download the ZIP file containing all protected images</li>
+                        </ol>
+                        
+                        <h3 style="color: #27ae60;">Extracting an Invisible Watermark</h3>
+                        <ol>
+                            <li>Go to the <strong>"Extract Watermark"</strong> tab</li>
+                            <li>Upload an image that you suspect contains a hidden watermark</li>
+                            <li>Click <strong>"🔍 Extract Invisible Watermark"</strong></li>
+                            <li>If a watermark is found, it will be displayed in the text box.</li>
                         </ol>
                         
                         <h2 style="color: #3498db;">💡 Pro Tips</h2>
