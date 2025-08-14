@@ -44,7 +44,10 @@ def protect_image_single(
     add_watermark: bool,
     watermark_text: str,
     watermark_opacity: float,
-    watermark_image: ImageType
+    watermark_image: ImageType,
+    # Invisible watermark options
+    add_invisible_watermark: bool,
+    invisible_watermark_text: str
 ) -> Tuple[Optional[Image.Image], str]:
     """
     Main function to apply selected protection methods to a single image.
@@ -119,6 +122,13 @@ def protect_image_single(
                 )
                 applied_methods.append("Image Watermark Added")
         
+        if add_invisible_watermark and invisible_watermark_text:
+            protected_image = metadata.add_invisible_watermark(
+                protected_image,
+                signature=invisible_watermark_text
+            )
+            applied_methods.append("Invisible Watermark Added")
+            
         status = f"✅ Protection applied: {', '.join(applied_methods)}"
         return protected_image, status
         
@@ -149,7 +159,10 @@ def protect_images_batch(
     add_watermark: bool,
     watermark_text: str,
     watermark_opacity: float,
-    watermark_image: ImageType
+    watermark_image: ImageType,
+    # Invisible watermark options
+    add_invisible_watermark: bool,
+    invisible_watermark_text: str
 ) -> Tuple[Optional[str], str]:
     """
     Main function to apply selected protection methods to a batch of images.
@@ -183,7 +196,9 @@ def protect_images_batch(
                 add_watermark,
                 watermark_text,
                 watermark_opacity,
-                watermark_image
+                watermark_image,
+                add_invisible_watermark,
+                invisible_watermark_text
             )
 
             if protected_image:
@@ -265,7 +280,11 @@ def create_interface():
                             watermark_text = gr.Textbox(label="Watermark Text", placeholder="© Your Name", visible=False)
                             watermark_image = gr.Image(label="Watermark Image", type="pil", visible=False)
                             watermark_opacity = gr.Slider(minimum=0.1, maximum=1.0, value=0.3, step=0.1, label="Watermark Opacity", visible=False)
-                        
+                            
+                            gr.Markdown("---")
+                            add_invisible_watermark = gr.Checkbox(label="Add Invisible Watermark (LSB)", value=False)
+                            invisible_watermark_text = gr.Textbox(label="Invisible Watermark Text", placeholder="Enter a secret message...", visible=False)
+
                         protect_btn = gr.Button("🛡️ Protect Image", variant="primary", size="lg")
                         
                     with gr.Column(scale=1):
@@ -293,9 +312,15 @@ def create_interface():
                         watermark_opacity: gr.update(visible=enabled)
                     }
                 
+                def update_invisible_watermark_visibility(enabled: bool) -> Dict[gr.Component, GradioUpdateType]:
+                    return {
+                        invisible_watermark_text: gr.update(visible=enabled)
+                    }
+                
                 protection_method.change(update_options_visibility, inputs=[protection_method], outputs=[cloak_options, style_options, faceshield_options])
                 add_watermark.change(update_watermark_visibility, inputs=[add_watermark], outputs=[watermark_text, watermark_image, watermark_opacity])
-                
+                add_invisible_watermark.change(update_invisible_watermark_visibility, inputs=[add_invisible_watermark], outputs=[invisible_watermark_text])
+
                 protect_btn.click(
                     protect_image_single,
                     inputs=[
@@ -304,7 +329,8 @@ def create_interface():
                         style_strength, texture_type,
                         faceshield_intensity, faceshield_method, faceshield_blur,
                         crop_enabled, crop_ratio, edge_softness, crop_sensitivity,
-                        strip_exif, add_watermark, watermark_text, watermark_opacity, watermark_image
+                        strip_exif, add_watermark, watermark_text, watermark_opacity, watermark_image,
+                        add_invisible_watermark, invisible_watermark_text
                     ],
                     outputs=[output_image, status_text]
                 )
@@ -355,7 +381,11 @@ def create_interface():
                             batch_watermark_text = gr.Textbox(label="Watermark Text", placeholder="© Your Name", visible=False)
                             batch_watermark_image = gr.Image(label="Watermark Image", type="pil", visible=False)
                             batch_watermark_opacity = gr.Slider(minimum=0.1, maximum=1.0, value=0.3, step=0.1, label="Watermark Opacity", visible=False)
-                        
+                            
+                            gr.Markdown("---")
+                            batch_add_invisible_watermark = gr.Checkbox(label="Add Invisible Watermark (LSB)", value=False)
+                            batch_invisible_watermark_text = gr.Textbox(label="Invisible Watermark Text", placeholder="Enter a secret message...", visible=False)
+
                         batch_protect_btn = gr.Button("🛡️ Protect All Images", variant="primary", size="lg")
                         
                     with gr.Column(scale=1):
@@ -377,8 +407,14 @@ def create_interface():
                         batch_watermark_opacity: gr.update(visible=enabled)
                     }
                 
+                def batch_update_invisible_watermark_visibility(enabled: bool) -> Dict[gr.Component, GradioUpdateType]:
+                    return {
+                        batch_invisible_watermark_text: gr.update(visible=enabled)
+                    }
+                
                 batch_protection_method.change(batch_update_options_visibility, inputs=[batch_protection_method], outputs=[batch_cloak_options, batch_style_options, batch_faceshield_options])
                 batch_add_watermark.change(batch_update_watermark_visibility, inputs=[batch_add_watermark], outputs=[batch_watermark_text, batch_watermark_image, batch_watermark_opacity])
+                batch_add_invisible_watermark.change(batch_update_invisible_watermark_visibility, inputs=[batch_add_invisible_watermark], outputs=[batch_invisible_watermark_text])
 
                 batch_protect_btn.click(
                     protect_images_batch,
@@ -388,9 +424,41 @@ def create_interface():
                         batch_style_strength, batch_texture_type,
                         batch_faceshield_intensity, batch_faceshield_method, batch_faceshield_blur,
                         batch_crop_enabled, batch_crop_ratio, batch_edge_softness, batch_crop_sensitivity,
-                        batch_strip_exif, batch_add_watermark, batch_watermark_text, batch_watermark_opacity, batch_watermark_image
+                        batch_strip_exif, batch_add_watermark, batch_watermark_text, batch_watermark_opacity, batch_watermark_image,
+                        batch_add_invisible_watermark, batch_invisible_watermark_text
                     ],
                     outputs=[batch_output_file, batch_status_text]
+                )
+
+            with gr.TabItem("Extract Watermark"):
+                with gr.Row():
+                    with gr.Column():
+                        extract_image_input = gr.Image(label="Upload Image to Extract Watermark", type="pil")
+                        extract_button = gr.Button("🔍 Extract Invisible Watermark", variant="primary")
+                    with gr.Column():
+                        extracted_text_output = gr.Textbox(label="Extracted Watermark", interactive=False)
+                        extraction_status = gr.Textbox(label="Status", interactive=False)
+
+                def extract_watermark_fn(image: ImageType) -> Tuple[str, str]:
+                    if image is None:
+                        return "", "Please upload an image."
+                    try:
+                        if isinstance(image, np.ndarray):
+                            image = Image.fromarray(image)
+                        
+                        watermark = metadata.extract_invisible_watermark(image)
+                        
+                        if watermark:
+                            return watermark, "✅ Watermark extracted successfully."
+                        else:
+                            return "", "⚠️ No invisible watermark found."
+                    except Exception as e:
+                        return "", f"❌ Error during extraction: {str(e)}"
+
+                extract_button.click(
+                    extract_watermark_fn,
+                    inputs=[extract_image_input],
+                    outputs=[extracted_text_output, extraction_status]
                 )
 
             with gr.TabItem("Guide"):
