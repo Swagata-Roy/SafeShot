@@ -360,7 +360,7 @@ def create_interface():
                         with gr.Group(visible=True) as batch_cloak_options:
                             gr.Markdown("### Cloaking Options")
                             batch_cloak_intensity = gr.Slider(minimum=0.1, maximum=1.0, value=0.5, step=0.1, label="Cloaking Intensity")
-                            batch_cloak_method = gr.Dropdown(choices=["Fawkes-style", "LowKey-style"], value="Fawkes-style", label="Cloaking Method")
+                            batch_cloak_method = gr.Dropdown(choices=["fawkes", "lowkey"], value="fawkes", label="Cloaking Method")
                         
                         with gr.Group(visible=False) as batch_style_options:
                             gr.Markdown("### Style Defense Options")

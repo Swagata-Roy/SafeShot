@@ -282,10 +282,19 @@ def add_invisible_watermark(
     Returns:
         Image with invisible watermark
     """
-    # Convert to numpy array
+    # Ensure we are working with a format that can be watermarked
+    if image.mode not in ['RGB', 'RGBA']:
+        image = image.convert('RGB')
+
     img_array = np.array(image)
-    _, _ = img_array.shape[:2]  # height, width
     
+    # Use only RGB channels for watermarking to avoid alpha channel issues
+    is_rgba = (len(img_array.shape) == 3 and img_array.shape[2] == 4)
+    if is_rgba:
+        rgb_array = img_array[:, :, :3]
+    else:
+        rgb_array = img_array
+
     # Convert signature to binary
     binary_signature = ''.join(format(ord(char), '08b') for char in signature)
     
@@ -294,18 +303,28 @@ def add_invisible_watermark(
     length_binary = format(signature_length, '032b')
     full_binary = length_binary + binary_signature
     
-    # Embed in least significant bits
-    flat_array = img_array.flatten()
+    # Check if the message is too long to be embedded
+    if len(full_binary) > rgb_array.size:
+        raise ValueError("Signature is too long to be embedded in the image.")
+
+    # Embed in least significant bits of RGB channels
+    flat_array = rgb_array.flatten()
     
     for i, bit in enumerate(full_binary):
-        if i < len(flat_array):
-            # Modify LSB
-            if bit == '1':
-                flat_array[i] = flat_array[i] | 1
-            else:
-                flat_array[i] = flat_array[i] & ~1
+        # Modify LSB
+        if bit == '1':
+            flat_array[i] = flat_array[i] | 1
+        else:
+            flat_array[i] = flat_array[i] & ~1
     
-    watermarked_array = flat_array.reshape(img_array.shape)
+    watermarked_rgb = flat_array.reshape(rgb_array.shape)
+    
+    # Reconstruct RGBA image if necessary
+    if is_rgba:
+        alpha_channel = img_array[:, :, 3]
+        watermarked_array = np.dstack((watermarked_rgb, alpha_channel))
+    else:
+        watermarked_array = watermarked_rgb
     
     return Image.fromarray(watermarked_array.astype(np.uint8))
 
@@ -320,43 +339,55 @@ def extract_invisible_watermark(image: Image.Image) -> Optional[str]:
     Returns:
         Extracted signature or None if not found
     """
-    # Convert to numpy array
+    # Ensure we are working with a format that can be read
+    if image.mode not in ['RGB', 'RGBA']:
+        try:
+            image = image.convert('RGB')
+        except:
+            return None # Cannot convert
+
     img_array = np.array(image)
     
-    # Extract from least significant bits
-    if len(img_array.shape) == 3:
-        flat_array = img_array.flatten()
+    # Use only RGB channels for extraction
+    is_rgba = (len(img_array.shape) == 3 and img_array.shape[2] == 4)
+    if is_rgba:
+        rgb_array = img_array[:, :, :3]
     else:
-        flat_array = img_array.flatten()
+        rgb_array = img_array
     
+    flat_array = rgb_array.flatten()
+    
+    # Check if there's enough data for the length
+    if flat_array.size < 32:
+        return None
+
     # Extract length first (32 bits)
-    length_binary = ''
-    for i in range(32):
-        if i < len(flat_array):
-            length_binary += str(flat_array[i] & 1)
+    length_binary = ''.join(str(p & 1) for p in flat_array[:32])
     
     try:
         signature_length = int(length_binary, 2)
         
         # Sanity check
-        if signature_length <= 0 or signature_length > 10000:
+        if signature_length <= 0 or signature_length > flat_array.size - 32:
             return None
         
         # Extract signature
-        signature_binary = ''
-        for i in range(32, 32 + signature_length):
-            if i < len(flat_array):
-                signature_binary += str(flat_array[i] & 1)
+        end_index = 32 + signature_length
+        signature_binary = ''.join(str(p & 1) for p in flat_array[32:end_index])
         
         # Convert binary to text
         signature = ''
         for i in range(0, len(signature_binary), 8):
             byte = signature_binary[i:i+8]
             if len(byte) == 8:
-                signature += chr(int(byte, 2))
+                try:
+                    signature += chr(int(byte, 2))
+                except ValueError:
+                    # Invalid character, might not be a watermark
+                    return signature # Return what we have so far
         
         return signature
-    except:
+    except (ValueError, IndexError):
         return None
 
 
