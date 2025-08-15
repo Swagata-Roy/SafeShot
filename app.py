@@ -46,6 +46,7 @@ def protect_image_single(
     watermark_opacity: float,
     watermark_font_size: int,
     watermark_image: ImageType,
+    watermark_image_size: float,
     # Invisible watermark options
     add_invisible_watermark: bool,
     invisible_watermark_text: str
@@ -120,7 +121,8 @@ def protect_image_single(
                 protected_image = metadata.add_image_watermark(
                     protected_image,
                     watermark_image=watermark_image,
-                    opacity=watermark_opacity
+                    opacity=watermark_opacity,
+                    scale=watermark_image_size
                 )
                 applied_methods.append("Image Watermark Added")
         
@@ -163,6 +165,7 @@ def protect_images_batch(
     watermark_opacity: float,
     watermark_font_size: int,
     watermark_image: ImageType,
+    watermark_image_size: float,
     # Invisible watermark options
     add_invisible_watermark: bool,
     invisible_watermark_text: str
@@ -201,6 +204,7 @@ def protect_images_batch(
                 watermark_opacity,
                 watermark_font_size,
                 watermark_image,
+                watermark_image_size,
                 add_invisible_watermark,
                 invisible_watermark_text
             )
@@ -283,6 +287,7 @@ def create_interface():
                             add_watermark = gr.Checkbox(label="Add Watermark", value=False)
                             watermark_text = gr.Textbox(label="Watermark Text", placeholder="© Your Name", visible=False)
                             watermark_image = gr.Image(label="Watermark Image", type="pil", visible=False)
+                            watermark_image_size = gr.Slider(minimum=0.05, maximum=1.0, value=0.2, step=0.05, label="Watermark Image Size", visible=False)
                             watermark_opacity = gr.Slider(minimum=0.1, maximum=1.0, value=0.3, step=0.1, label="Watermark Opacity", visible=False)
                             watermark_font_size = gr.Slider(minimum=10, maximum=200, value=50, step=2, label="Watermark Font Size", visible=False)
                             
@@ -314,6 +319,7 @@ def create_interface():
                     return {
                         watermark_text: gr.update(visible=enabled),
                         watermark_image: gr.update(visible=enabled),
+                        watermark_image_size: gr.update(visible=enabled),
                         watermark_opacity: gr.update(visible=enabled),
                         watermark_font_size: gr.update(visible=enabled)
                     }
@@ -324,7 +330,7 @@ def create_interface():
                     }
                 
                 protection_method.change(update_options_visibility, inputs=[protection_method], outputs=[cloak_options, style_options, faceshield_options])
-                add_watermark.change(update_watermark_visibility, inputs=[add_watermark], outputs=[watermark_text, watermark_image, watermark_opacity, watermark_font_size])
+                add_watermark.change(update_watermark_visibility, inputs=[add_watermark], outputs=[watermark_text, watermark_image, watermark_image_size, watermark_opacity, watermark_font_size])
                 add_invisible_watermark.change(update_invisible_watermark_visibility, inputs=[add_invisible_watermark], outputs=[invisible_watermark_text])
 
                 protect_btn.click(
@@ -335,7 +341,7 @@ def create_interface():
                         style_strength, texture_type,
                         faceshield_intensity, faceshield_method, faceshield_blur,
                         crop_enabled, crop_ratio, edge_softness, crop_sensitivity,
-                        strip_exif, add_watermark, watermark_text, watermark_opacity, watermark_font_size, watermark_image,
+                        strip_exif, add_watermark, watermark_text, watermark_opacity, watermark_font_size, watermark_image, watermark_image_size,
                         add_invisible_watermark, invisible_watermark_text
                     ],
                     outputs=[output_image, status_text]
@@ -386,6 +392,7 @@ def create_interface():
                             batch_add_watermark = gr.Checkbox(label="Add Watermark", value=False)
                             batch_watermark_text = gr.Textbox(label="Watermark Text", placeholder="© Your Name", visible=False)
                             batch_watermark_image = gr.Image(label="Watermark Image", type="pil", visible=False)
+                            batch_watermark_image_size = gr.Slider(minimum=0.05, maximum=1.0, value=0.2, step=0.05, label="Watermark Image Size", visible=False)
                             batch_watermark_opacity = gr.Slider(minimum=0.1, maximum=1.0, value=0.3, step=0.1, label="Watermark Opacity", visible=False)
                             batch_watermark_font_size = gr.Slider(minimum=10, maximum=200, value=50, step=2, label="Watermark Font Size", visible=False)
                             
@@ -411,6 +418,7 @@ def create_interface():
                     return {
                         batch_watermark_text: gr.update(visible=enabled),
                         batch_watermark_image: gr.update(visible=enabled),
+                        batch_watermark_image_size: gr.update(visible=enabled),
                         batch_watermark_opacity: gr.update(visible=enabled),
                         batch_watermark_font_size: gr.update(visible=enabled)
                     }
@@ -421,7 +429,7 @@ def create_interface():
                     }
                 
                 batch_protection_method.change(batch_update_options_visibility, inputs=[batch_protection_method], outputs=[batch_cloak_options, batch_style_options, batch_faceshield_options])
-                batch_add_watermark.change(batch_update_watermark_visibility, inputs=[batch_add_watermark], outputs=[batch_watermark_text, batch_watermark_image, batch_watermark_opacity, batch_watermark_font_size])
+                batch_add_watermark.change(batch_update_watermark_visibility, inputs=[batch_add_watermark], outputs=[batch_watermark_text, batch_watermark_image, batch_watermark_image_size, batch_watermark_opacity, batch_watermark_font_size])
                 batch_add_invisible_watermark.change(batch_update_invisible_watermark_visibility, inputs=[batch_add_invisible_watermark], outputs=[batch_invisible_watermark_text])
 
                 batch_protect_btn.click(
@@ -432,7 +440,7 @@ def create_interface():
                         batch_style_strength, batch_texture_type,
                         batch_faceshield_intensity, batch_faceshield_method, batch_faceshield_blur,
                         batch_crop_enabled, batch_crop_ratio, batch_edge_softness, batch_crop_sensitivity,
-                        batch_strip_exif, batch_add_watermark, batch_watermark_text, batch_watermark_opacity, batch_watermark_font_size, batch_watermark_image,
+                        batch_strip_exif, batch_add_watermark, batch_watermark_text, batch_watermark_opacity, batch_watermark_font_size, batch_watermark_image, batch_watermark_image_size,
                         batch_add_invisible_watermark, batch_invisible_watermark_text
                     ],
                     outputs=[batch_output_file, batch_status_text]
