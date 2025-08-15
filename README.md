@@ -84,7 +84,7 @@ The application will open in your browser at `http://localhost:7861`
 #### Metadata Protection
 - **Strip EXIF**: Remove all metadata including GPS, camera info, etc.
 - **Add Watermark**: Overlay text or image watermarks
-- **Watermark Customization**: Adjust opacity, position, and text
+- **Watermark Customization**: Adjust opacity, size, and text
 - **Invisible Watermark**: Embed a hidden message into the image using LSB steganography to prove ownership.
 
 ## 🔧 Technical Details

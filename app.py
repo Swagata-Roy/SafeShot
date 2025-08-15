@@ -531,9 +531,9 @@ def create_interface():
                         <h2 style="color: #3498db;">🛡️ Metadata Protection</h2>
                         <ul>
                             <li><strong>Strip EXIF:</strong> Removes location, device, and timestamp data</li>
-                            <li><strong>Text Watermark:</strong> Adds custom text overlays</li>
-                            <li><strong>Image Watermark:</strong> Embeds logo or signature images</li>
-                            <li><strong>Opacity Control:</strong> Adjust watermark transparency</li>
+                            <li><strong>Text Watermark:</strong> Adds custom text overlays with adjustable font size.</li>
+                            <li><strong>Image Watermark:</strong> Embeds logo or signature images with adjustable size.</li>
+                            <li><strong>Opacity Control:</strong> Adjust watermark transparency for both text and image watermarks.</li>
                             <li><strong>Invisible Watermark:</strong> Embed a hidden message (signature) into the image using LSB steganography. This is useful for proving ownership later.</li>
                         </ul>
                         
